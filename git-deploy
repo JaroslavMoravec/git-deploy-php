@@ -175,6 +175,7 @@ abstract class Server {
     public $existing_paths_cache;
     public $clean_directories;
     public $ignore_files;
+    public $ignore_dirs;
     public $upload_untracked;
     public $server;
 
@@ -184,6 +185,7 @@ abstract class Server {
         $this->ignore_files = array_merge(array(
             '.gitignore', '.gitattributes', '.gitmodules', 'deploy.ini', 'git-deploy', $deploy_script
                 ), $server['ignore_files']);
+		$this->ignore_dirs = $server['ignore_dirs'];
         $this->upload_untracked = $server['upload_untracked'];
         $this->host = "{$server['scheme']}://{$server['user']}@{$server['host']}:{$server['port']}{$server['path']}";
         $this->connect($server);
@@ -213,8 +215,21 @@ abstract class Server {
 
         # Get files between $commit and REVISION
         $changes = $git->get_changes($target_commit, $this->current_commit);
-
+		
+		if (!empty($this->ignore_dirs)) {
+			foreach ($this->ignore_dirs as $i => $item) {
+				$item = trim($item, '/') . '/';
+				$item = preg_quote($item, "#");
+				$this->ignore_dirs[$i] = $item;
+			}
+			$ignoreDirRegex = '#^(' . implode('|', $this->ignore_dirs) . ')#';
+		}
+		
         foreach ($changes['upload'] as $file => $contents) {
+			if (isset($ignoreDirRegex) && preg_match($ignoreDirRegex, $file)) {
+				unset($changes['upload'][$file]);
+				continue;
+			}
             if (in_array($file, $this->ignore_files)) {
                 unset($changes['upload'][$file]);
             }
@@ -603,6 +618,7 @@ class Config {
                     'passive' => true,
                     'clean_directories' => array(),
                     'ignore_files' => array(),
+					'ignore_dirs' => array(),
                     'upload_untracked' => array()
                         ), $options);
 

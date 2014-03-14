@@ -109,6 +109,15 @@ If you have files that you don't want uploaded to your server, you can add the f
 
 And git-deploy will ignore those files.
 
+### Ignore directories
+
+If you want to ignore whole directories, you can add the following to your .ini file:
+    
+    ignore_dirs[] = /dir/to/ignore
+    idnore_dirs[] = /another/dir
+
+And git-deploy will ignore them.
+
 ### Upload untracked files
 
 If you have files that you're not tracking in your repository but that you'd still like to upload, you can add the following to your .ini file:
